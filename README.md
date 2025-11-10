@@ -100,13 +100,6 @@ Built with Python and SQLite, QueueCTL provides enterprise-grade features in a p
 - **🛡️ Error Handling** - Comprehensive error tracking with stack traces
 - **📝 Job Metadata** - Track creation time, attempts, errors, exit codes
 - **🎛️ Runtime Configuration** - Change settings without code modification
-| **Worker Pool** | Start/stop multiple workers dynamically |
-| **Auto-Retry** | Exponential backoff with configurable max retries |
-| **DLQ Management** | View and retry permanently failed jobs |
-| **State Tracking** | Monitor jobs across their lifecycle |
-| **Persistence** | SQLite-based storage (or JSON/file-based) |
-| **Configuration** | Customize retry count, backoff base, timeouts |
-| **Concurrency Safe** | File/row-level locking prevents race conditions |
 
 ---
 
@@ -184,15 +177,16 @@ pending -> processing -> completed
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/queuectl.git
+git clone https://github.com/Rhushya/queuectl.git
 cd queuectl
 
 # Install dependencies with Poetry
 poetry install
 
-# Make CLI executable
+# Make CLI executable (Linux/Mac)
 chmod +x queuectl.py
-# OR create an alias
+
+# OR create an alias (Linux/Mac/PowerShell)
 alias queuectl='poetry run python queuectl.py'
 ```
 
@@ -215,19 +209,19 @@ sudo mv queuectl /usr/local/bin/
 
 ```bash
 # 1. Initialize the system (creates database)
-queuectl init
+poetry run python queuectl.py init
 
 # 2. Add a simple job
-queuectl enqueue '{"id":"job1","command":"echo Hello World"}'
+poetry run python queuectl.py enqueue '{"id":"job1","command":"echo Hello World"}'
 
 # 3. Start 2 workers
-queuectl worker start --count 2
+poetry run python queuectl.py worker start --count 2
 
 # 4. Check status
-queuectl status
+poetry run python queuectl.py status
 
 # 5. Stop workers (gracefully)
-queuectl worker stop
+poetry run python queuectl.py worker stop
 ```
 
 ---
@@ -237,13 +231,15 @@ queuectl worker stop
 ### Enqueue Jobs
 
 **Basic job:**
+
 ```bash
-queuectl enqueue '{"id":"job1","command":"sleep 2"}'
+poetry run python queuectl.py enqueue '{"id":"job1","command":"sleep 2"}'
 ```
 
 **Job with custom retries:**
+
 ```bash
-queuectl enqueue '{
+poetry run python queuectl.py enqueue '{
   "id":"job2",
   "command":"python process.py",
   "max_retries":5
@@ -251,7 +247,8 @@ queuectl enqueue '{
 ```
 
 **Output:**
-```
+
+```text
 ✓ Job job1 enqueued successfully
   State: pending
   Command: sleep 2
@@ -260,156 +257,195 @@ queuectl enqueue '{
 ### Worker Management
 
 **Start workers:**
+
 ```bash
 # Start 3 workers
-queuectl worker start --count 3
+poetry run python queuectl.py worker start --count 3
+```
 
-# Output:
-# ✓ Started 3 workers (PIDs: 1234, 1235, 1236)
+**Output:**
+
+```text
+✓ Started 3 workers (PIDs: 1234, 1235, 1236)
 ```
 
 **Stop workers:**
-```bash
-queuectl worker stop
 
-# Output:
-# ✓ Gracefully stopping 3 workers...
-# ✓ All workers stopped
+```bash
+poetry run python queuectl.py worker stop
+```
+
+**Output:**
+
+```text
+✓ Gracefully stopping 3 workers...
+✓ All workers stopped
 ```
 
 **Check active workers:**
-```bash
-queuectl worker list
 
-# Output:
-# Active Workers: 3
-# ┌──────┬─────────┬────────────────────┐
-# │ PID  │ Status  │ Current Job        │
-# ├──────┼─────────┼────────────────────┤
-# │ 1234 │ Running │ job5               │
-# │ 1235 │ Idle    │ -                  │
-# │ 1236 │ Running │ job7               │
-# └──────┴─────────┴────────────────────┘
+```bash
+poetry run python queuectl.py worker list
+```
+
+**Output:**
+
+```text
+Active Workers: 3
+┌──────┬─────────┬────────────────────┐
+│ PID  │ Status  │ Current Job        │
+├──────┼─────────┼────────────────────┤
+│ 1234 │ Running │ job5               │
+│ 1235 │ Idle    │ -                  │
+│ 1236 │ Running │ job7               │
+└──────┴─────────┴────────────────────┘
 ```
 
 ### Job Status & Listing
 
 **Overall status:**
-```bash
-queuectl status
 
-# Output:
-# Job Queue Status
-# ┌────────────┬───────┐
-# │ State      │ Count │
-# ├────────────┼───────┤
-# │ pending    │ 5     │
-# │ processing │ 2     │
-# │ completed  │ 120   │
-# │ failed     │ 3     │
-# │ dead       │ 1     │
-# └────────────┴───────┘
-# 
-# Active Workers: 3
+```bash
+poetry run python queuectl.py status
+```
+
+**Output:**
+
+```text
+Job Queue Status
+┌────────────┬───────┐
+│ State      │ Count │
+├────────────┼───────┤
+│ pending    │ 5     │
+│ processing │ 2     │
+│ completed  │ 120   │
+│ failed     │ 3     │
+│ dead       │ 1     │
+└────────────┴───────┘
+
+Active Workers: 3
 ```
 
 **List jobs by state:**
+
 ```bash
 # List pending jobs
-queuectl list --state pending
+poetry run python queuectl.py list --state pending
 
 # List all jobs
-queuectl list --all
+poetry run python queuectl.py list --all
 
 # List with details
-queuectl list --state failed --verbose
+poetry run python queuectl.py list --state failed --verbose
+```
 
-# Output:
-# ┌───────┬─────────┬──────────┬─────────────────────┐
-# │ ID    │ State   │ Attempts │ Command             │
-# ├───────┼─────────┼──────────┼─────────────────────┤
-# │ job1  │ pending │ 0        │ echo Hello          │
-# │ job3  │ pending │ 0        │ python script.py    │
-# └───────┴─────────┴──────────┴─────────────────────┘
+**Output:**
+
+```text
+┌───────┬─────────┬──────────┬─────────────────────┐
+│ ID    │ State   │ Attempts │ Command             │
+├───────┼─────────┼──────────┼─────────────────────┤
+│ job1  │ pending │ 0        │ echo Hello          │
+│ job3  │ pending │ 0        │ python script.py    │
+└───────┴─────────┴──────────┴─────────────────────┘
 ```
 
 **Get specific job details:**
-```bash
-queuectl get job1
 
-# Output:
-# Job Details: job1
-# ─────────────────────────
-# Command:      echo Hello World
-# State:        completed
-# Attempts:     1
-# Max Retries:  3
-# Created:      2025-11-10 10:30:00
-# Updated:      2025-11-10 10:30:05
-# Exit Code:    0
+```bash
+poetry run python queuectl.py get job1
+```
+
+**Output:**
+
+```text
+Job Details: job1
+─────────────────────────
+Command:      echo Hello World
+State:        completed
+Attempts:     1
+Max Retries:  3
+Created:      2025-11-10 10:30:00
+Updated:      2025-11-10 10:30:05
+Exit Code:    0
 ```
 
 ### Dead Letter Queue
 
 **List DLQ jobs:**
-```bash
-queuectl dlq list
 
-# Output:
-# Dead Letter Queue (1 jobs)
-# ┌───────┬──────────┬─────────────────────────────┐
-# │ ID    │ Attempts │ Reason                      │
-# ├───────┼──────────┼─────────────────────────────┤
-# │ job99 │ 3        │ Command not found: badcmd   │
-# └───────┴──────────┴─────────────────────────────┘
+```bash
+poetry run python queuectl.py dlq list
+```
+
+**Output:**
+
+```text
+Dead Letter Queue (1 jobs)
+┌───────┬──────────┬─────────────────────────────┐
+│ ID    │ Attempts │ Reason                      │
+├───────┼──────────┼─────────────────────────────┤
+│ job99 │ 3        │ Command not found: badcmd   │
+└───────┴──────────┴─────────────────────────────┘
 ```
 
 **Retry DLQ job:**
-```bash
-queuectl dlq retry job99
 
-# Output:
-# ✓ Job job99 moved from DLQ to pending queue
+```bash
+poetry run python queuectl.py dlq retry --job-id job99
+```
+
+**Output:**
+
+```text
+✓ Job job99 moved from DLQ to pending queue
 ```
 
 **Retry all DLQ jobs:**
+
 ```bash
-queuectl dlq retry --all
+poetry run python queuectl.py dlq retry --all
 ```
 
 **Clear DLQ:**
+
 ```bash
-queuectl dlq clear
+poetry run python queuectl.py dlq clear
 ```
 
 ### Configuration
 
 **View current config:**
-```bash
-queuectl config show
 
-# Output:
-# Configuration
-# ─────────────────────────
-# max-retries:      3
-# backoff-base:     2
-# worker-count:     1
-# job-timeout:      300
+```bash
+poetry run python queuectl.py config show
+```
+
+**Output:**
+
+```text
+Configuration
+────────────────────────────────────────
+max-retries      : 3
+backoff-base     : 2
+worker-count     : 1
+job-timeout      : 300
 ```
 
 **Set configuration:**
+
 ```bash
 # Set max retries
-queuectl config set max-retries 5
+poetry run python queuectl.py config set max-retries 5
 
 # Set backoff base
-queuectl config set backoff-base 2
+poetry run python queuectl.py config set backoff-base 2
 
 # Set default worker count
-queuectl config set worker-count 3
+poetry run python queuectl.py config set worker-count 3
 
 # Set job timeout (seconds)
-queuectl config set job-timeout 600
+poetry run python queuectl.py config set job-timeout 600
 ```
 
 ---
@@ -485,61 +521,80 @@ Each job is represented as a JSON object:
 
 ```bash
 # Run all tests
-python -m pytest tests/
+poetry run pytest tests/
 
 # Run with coverage
-pytest --cov=queuectl tests/
+poetry run pytest --cov=queue tests/
 
 # Run specific test
-pytest tests/test_worker.py -v
+poetry run pytest tests/test_worker.py -v
+
+# Run verbose
+poetry run pytest tests/ -v
 ```
 
 ### Manual Test Scenarios
 
 #### 1. Basic Job Completion
+
 ```bash
-queuectl enqueue '{"id":"test1","command":"echo success"}'
-queuectl worker start --count 1
-sleep 2
-queuectl get test1  # Should show 'completed'
-queuectl worker stop
+poetry run python queuectl.py enqueue '{"id":"test1","command":"echo success"}'
+poetry run python queuectl.py worker start --count 1
+# Wait 2-3 seconds
+poetry run python queuectl.py get test1  # Should show 'completed'
+poetry run python queuectl.py worker stop
 ```
 
 #### 2. Failed Job with Retry
+
 ```bash
-queuectl enqueue '{"id":"test2","command":"exit 1","max_retries":2}'
-queuectl worker start --count 1
-sleep 10  # Wait for retries
-queuectl get test2  # Should show 'dead' after exhausting retries
-queuectl worker stop
+poetry run python queuectl.py enqueue '{"id":"test2","command":"exit 1","max_retries":2}'
+poetry run python queuectl.py worker start --count 1
+# Wait 10 seconds for retries
+poetry run python queuectl.py get test2  # Should show 'dead' after exhausting retries
+poetry run python queuectl.py worker stop
 ```
 
 #### 3. Multiple Workers
+
+**Windows PowerShell:**
+
+```powershell
+1..10 | ForEach-Object { poetry run python queuectl.py enqueue "{`"id`":`"job$_`",`"command`":`"echo Task $_`"}" }
+poetry run python queuectl.py worker start --count 5
+poetry run python queuectl.py status  # Should show jobs being processed concurrently
+poetry run python queuectl.py worker stop
+```
+
+**Linux/Mac:**
+
 ```bash
 for i in {1..10}; do
-  queuectl enqueue "{\"id\":\"job$i\",\"command\":\"sleep 1\"}"
+  poetry run python queuectl.py enqueue "{\"id\":\"job$i\",\"command\":\"echo Task $i\"}"
 done
-queuectl worker start --count 5
-queuectl status  # Should show jobs being processed concurrently
-queuectl worker stop
+poetry run python queuectl.py worker start --count 5
+poetry run python queuectl.py status  # Should show jobs being processed concurrently
+poetry run python queuectl.py worker stop
 ```
 
 #### 4. Persistence Test
+
 ```bash
-queuectl enqueue '{"id":"persist1","command":"echo test"}'
-queuectl worker stop  # Ensure workers are stopped
+poetry run python queuectl.py enqueue '{"id":"persist1","command":"echo test"}'
+poetry run python queuectl.py worker stop  # Ensure workers are stopped
 # Kill the process or restart system
-queuectl list --state pending  # Should still show persist1
+poetry run python queuectl.py list --state pending  # Should still show persist1
 ```
 
 #### 5. DLQ Flow
+
 ```bash
-queuectl enqueue '{"id":"bad1","command":"nonexistent_command","max_retries":1}'
-queuectl worker start --count 1
-sleep 5
-queuectl dlq list  # Should show bad1
-queuectl dlq retry bad1  # Move back to pending
-queuectl worker stop
+poetry run python queuectl.py enqueue '{"id":"bad1","command":"nonexistent_command","max_retries":1}'
+poetry run python queuectl.py worker start --count 1
+# Wait 5 seconds
+poetry run python queuectl.py dlq list  # Should show bad1
+poetry run python queuectl.py dlq retry --job-id bad1  # Move back to pending
+poetry run python queuectl.py worker stop
 ```
 
 ---

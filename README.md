@@ -955,6 +955,4 @@ Need help? Here are your options:
 **⭐ If you find QueueCTL helpful, please star the repository!**
 
 **📢 Share with others who might benefit from a simple, reliable job queue system!**
-#   q u e u e c t l 
- 
- 
+#

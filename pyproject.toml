@@ -1,0 +1,21 @@
+[tool.poetry]
+name = "queuectl"
+version = "0.1.0"
+description = "A CLI-based background job queue system with worker processes"
+authors = ["RHUSHYA.K.C <rhushya2004@gmail.com>"]
+readme = "README.md"
+packages = [{include = "queue"}]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.0"
+pytest-cov = "^4.1.0"
+
+[tool.poetry.scripts]
+queuectl = "queuectl:main"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
